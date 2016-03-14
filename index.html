@@ -14,19 +14,25 @@
   <!--[if lt IE 9]>
   <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
   <![endif]-->
+
 </head>
 <body>
-    <h1 data-bind="person">Will be bound to...</h1>
+    <h1 data-bind="person">World domination in progress</h1>
+    <h2 data-bind="lastName"></h2>
 
     <script type="text/javascript">
-         var personObservable = kopy.observable("Ov hell");
+         var personObservable = kopy.observable("Wait for it...");
 
-         var model = { person: personObservable };
+         var model = {
+                        person: personObservable,
+                        lastName: "Gaahl"
+         };
+
          kopy.applyBindings(model);
 
          setTimeout(function() {
-             model.person.setValue("Gaahl");
-         }, 5000)
+             model.person.setValue("Wait just a little more");
+         }, 3000);
     </script>
 </body>
 </html>

@@ -1,52 +1,50 @@
 /* global $ */
 
 var kopy = (function() {
-    function observable(value) {
+    function Observable(value) {
 
         var currentValue = value;
         var callbacks = [];
 
-        function setValue(newValue) {
+        this.setValue = function(newValue) {
             callbacks.forEach(function(callback) {
-                callback.call({}, currentValue, newValue);
-            })
+                callback(currentValue, newValue);
+            });
 
             currentValue = newValue;
         }
 
-        function getValue() {
+        this.getValue = function () {
             return currentValue;
         }
 
-        function observe(callback) {
+        this.observe = function(callback) {
             callbacks.push(callback);
         }
+    }
 
-        return {
-            setValue: setValue,
-            getValue: getValue,
-            observe: observe
-        }
+    function observable(value) {
+        return new Observable(value);
     }
 
     function applyBindings(viewModel) {
         $(document).ready(function() {
 
-            function updateValue(element, observable) {
-                element.html(observable.getValue());
-            }
-
             $('[data-bind]').each(function() {
                 var elem=$(this);
 
                 var boundValues = elem.data("bind");
-                var observable = viewModel[boundValues];
+                var modelValue = viewModel[boundValues];
 
-                elem.html(observable.getValue());
+                if(modelValue instanceof Observable) {
+                    elem.html(modelValue.getValue());
 
-                observable.observe(function(currentValue, newValue) {
-                    elem.html(newValue);
-                });
+                    modelValue.observe(function(currentValue, newValue) {
+                        elem.html(newValue);
+                    });
+                } else {
+                    elem.html(modelValue);
+                }
             });
         });
     }
