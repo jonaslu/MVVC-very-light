@@ -6,7 +6,7 @@ const kopy = (function() {
     */
     const bindings = {
         text: {
-            init: function(element, observable) {
+            init(element, observable) {
                 if(observable instanceof Observable) {
                     element.html(observable.getValue());
 
@@ -16,9 +16,20 @@ const kopy = (function() {
                 } else {
                     element.html(observable);
                 }
+            },
+
+            update(element, observable) {
+                element.html(observable.getValue());
             }
         }
     }
+
+    /***
+    * Dependency tracking, if this is defined (if (dependency) is true) then
+    * when a binding does a get on the observable, the observable is added here.
+    * This is then used to register an update callback.
+    */
+    let dependencies;
 
     /***
     * Acts as a constructor, holding the value in currentValue.
@@ -29,14 +40,18 @@ const kopy = (function() {
         const callbacks = [];
 
         this.setValue = newValue => {
-            callbacks.forEach(function(callback) {
-                callback(currentValue, newValue);
-            });
-
+            const oldValue = currentValue;
             currentValue = newValue;
+            callbacks.forEach(callback => callback(oldValue, newValue));
         }
 
-        this.getValue = () => currentValue;
+        this.getValue = () => {
+            if (dependencies) {
+                dependencies.push(this);
+            }
+            return currentValue;
+        }
+
         this.observe = callback => callbacks.push(callback);
     }
 
@@ -56,10 +71,14 @@ const kopy = (function() {
                 const boundValues = element.data("bind").replace(" ","");
 
                 boundValues.split(",").forEach(bindingAndValue => {
-                    const [binding, observableName] = bindingAndValue.split(":");
-
+                    const [bindingName, observableName] = bindingAndValue.split(":");
                     const observable = viewModel[observableName];
-                    bindings[binding].init(element, observable);
+
+                    const binding = bindings[bindingName].init(element, observable);
+
+                    dependencies = [];
+                    dependencies.forEach(observable => observable.observe(() => binding.update(element, observable)));
+                    delete dependencies;
                 });
             });
         });
