@@ -17,15 +17,15 @@
 
 </head>
 <body>
-    <h1 data-bind="person">World domination in progress</h1>
-    <h2 data-bind="lastName"></h2>
+    <h1 data-bind="text: person">World domination in progress</h1>
+    <h2 data-bind="text: lastName"></h2>
 
     <script type="text/javascript">
-         var personObservable = kopy.observable("Wait for it...");
+         const personObservable = kopy.observable("Wait for it...");
 
-         var model = {
-                        person: personObservable,
-                        lastName: "Gaahl"
+         const model = {
+             person: personObservable,
+             lastName: "Gaahl"
          };
 
          kopy.applyBindings(model);

@@ -1,12 +1,34 @@
 /* global $ */
 
-var kopy = (function() {
+const kopy = (function() {
+    /***
+    * Array with the known bindings (e g text, css, html)
+    */
+    const bindings = {
+        text: {
+            init: function(element, observable) {
+                if(observable instanceof Observable) {
+                    element.html(observable.getValue());
+
+                    observable.observe((currentValue, newValue) => {
+                        element.html(newValue);
+                    });
+                } else {
+                    element.html(observable);
+                }
+            }
+        }
+    }
+
+    /***
+    * Acts as a constructor, holding the value in currentValue.
+    * Should do prototype stuff on setValue, getValue
+    */
     function Observable(value) {
+        let currentValue = value;
+        const callbacks = [];
 
-        var currentValue = value;
-        var callbacks = [];
-
-        this.setValue = function(newValue) {
+        this.setValue = newValue => {
             callbacks.forEach(function(callback) {
                 callback(currentValue, newValue);
             });
@@ -14,15 +36,14 @@ var kopy = (function() {
             currentValue = newValue;
         }
 
-        this.getValue = function () {
-            return currentValue;
-        }
-
-        this.observe = function(callback) {
-            callbacks.push(callback);
-        }
+        this.getValue = () => currentValue;
+        this.observe = callback => callbacks.push(callback);
     }
 
+    /***
+    * Convenience function that creates the observable (so the user doesn't have to
+    * type new Observable()
+    */
     function observable(value) {
         return new Observable(value);
     }
@@ -30,27 +51,22 @@ var kopy = (function() {
     function applyBindings(viewModel) {
         $(document).ready(function() {
 
-            $('[data-bind]').each(function() {
-                var elem=$(this);
+            $('[data-bind]').each((index, elem) => {
+                const element = $(elem);
+                const boundValues = element.data("bind").replace(" ","");
 
-                var boundValues = elem.data("bind");
-                var modelValue = viewModel[boundValues];
+                boundValues.split(",").forEach(bindingAndValue => {
+                    const [binding, observableName] = bindingAndValue.split(":");
 
-                if(modelValue instanceof Observable) {
-                    elem.html(modelValue.getValue());
-
-                    modelValue.observe(function(currentValue, newValue) {
-                        elem.html(newValue);
-                    });
-                } else {
-                    elem.html(modelValue);
-                }
+                    const observable = viewModel[observableName];
+                    bindings[binding].init(element, observable);
+                });
             });
         });
     }
 
     return {
-        observable: observable,
-        applyBindings: applyBindings
+        observable,
+        applyBindings,
     };
 }());
